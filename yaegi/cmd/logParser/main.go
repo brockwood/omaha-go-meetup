@@ -58,8 +58,8 @@ func main() {
 	if len(os.Args) == 1 {
 		fmt.Println("usage: logs <command>")
 		fmt.Println("Available commands:")
-		for command, _ := range cmds {
-			fmt.Printf("\t%s\n", command)
+		for commandName, command := range cmds {
+			fmt.Printf("\t%s\t- %s\n", commandName, command.Description)
 		}
 		os.Exit(1)
 	}
