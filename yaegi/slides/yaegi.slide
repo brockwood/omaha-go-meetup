@@ -93,3 +93,5 @@ Let's talk about weather (of course)
 - Initial version used math.Pow, removing that saved nearly a whole second
 
 * Questions?
+
+Code examples and these slides are available [[https://github.com/brockwood/omaha-go-meetup/tree/master/yaegi][here!]]
