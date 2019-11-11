@@ -1,0 +1,9 @@
+goos: darwin
+goarch: amd64
+pkg: github.com/brockwood/omaha-go-meetup/yaegi/cmd/derivedParameters
+BenchmarkCalcWindDir-8         	     300	  41455338 ns/op ( 41.45533 ms/op)
+BenchmarkCalcWindSpd-8         	    3000	   5173283 ns/op (  5.17328 ms/op)
+BenchmarkCalcWindDirInterp-8   	      10	1776760399 ns/op ( 1.7767603 s/op)
+BenchmarkCalcWindSpdInterp-8   	      10	1098521413 ns/op ( 1.0985214 s/op)
+PASS
+ok  	github.com/brockwood/omaha-go-meetup/yaegi/cmd/derivedParameters	65.204s

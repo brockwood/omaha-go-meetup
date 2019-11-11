@@ -1,0 +1,11 @@
+#!/usr/bin/env yaegi
+
+package main
+
+import "fmt"
+
+func main() {
+	for i := 1; i <= 10; i++ {
+	    fmt.Printf("I know how to count to %d...\n", i)
+	}
+}

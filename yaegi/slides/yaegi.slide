@@ -1,0 +1,95 @@
+Yægi: Go Scripting Zen 
+Omaha Go Meetup, 2019/11/11
+
+Bryan Rockwood
+Infrastructure Engineer At Flywheel
+https://github.com/brockwood
+@BRock97
+
+* github.com/containous/yaegi
+
+[[https://github.com/containous/yaegi][Yægi]] is Another Elegant Go Interpreter. 
+It powers executable Go scripts and plugins, in embedded interpreters or 
+interactive shells, on top of the Go runtime.
+
+- Complete support of Go specification
+- Written in pure Go, using only the standard library
+- Simple interpreter API: New(), Eval(), Use()
+- Works everywhere Go works
+- All Go & runtime resources accessible from script (with control)
+- Security: unsafe and syscall packages neither used nor exported by default
+- Support Go 1.12 and Go 1.13 (the latest 2 major releases)
+
+* Limitations
+
+- Assembly files (.s) are not supported
+- %T may work differently in the script than compiled
+- Interpreting computation intensive code is likely to remain significantly slower than in compiled mode (more on that later)
+
+* Obligatory HelloWorld Example
+
+.code helloworld.go
+
+* One Possible Usage - Shell Script
+
+Run
+
+  go get -u github.com/containous/yaegi/cmd/yaegi
+
+then you can run scripts like this:
+
+.code script.sgo
+
+* Another Usage - Plugins
+
+- Create a main Go CLI that loads Go code at init()
+- Define a common interface for those plugins
+- Invoke the plugin based on arguments
+
+* Plugin Simple Example - Loading Plugins
+
+.code ../cmd/logParser/main.go /range files/,/^\t}/
+
+* Plugin Simple Example - Example Plugin
+
+.code ../cmd/logParser/cmds/list.go
+
+* Plugin Simple Example - Executing
+
+.code ../cmd/logParser/main.go /^func main/,/^}/
+
+* Bonus Plugin Example - Computational Plugins
+
+Let's talk about weather (of course)
+
+- Model forecasts parameters are basic
+- Many common parameters across different models
+- Forecaster software takes these parameters and computes useful ones
+- Forecasters are coming up with new parameters all the time
+
+* Bonus Plugin Example - The Thunderdome Of Data
+
+- The HRRR is a high resolution model
+- Run hourly
+- Grid resolution of 1799 x 1059 (that's 1,905,141 grid points!)
+
+* Bonus Plugin Example - The Test
+
+- Take scalar values of wind, u and v, and convert them into wind speed and direction
+- Compare the speed of compiled code vs interpreted code
+- Verify answers
+
+* Bonus Plugin Example - The Results
+
+  cd ../cmd/dervivedParameters
+  go test -bench=. -benchtime=10s
+
+.code benchmark.txt
+
+* Bonus Plugin Example - Observations
+
+- Large datasets are not a good candidate
+- Lack of Assembly support (the .s files) can also really hurt performance
+- Initial version used math.Pow, removing that saved nearly a whole second
+
+* Questions?
