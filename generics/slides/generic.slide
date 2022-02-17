@@ -1,0 +1,181 @@
+# Generics In Go
+An Introductory Discussion
+17 Feb 2022
+Tags: golang, generics
+Summary: Generics are landing in Go 1.18, let's chat about that!
+
+Bryan Rockwood
+Cloud Engineer, Chromatic
+https://github.com/brockwood
+@BRock97
+
+## Coming In Go 1.18
+
+- First mention of generics was [within an hour](https://groups.google.com/g/golang-nuts/c/70-pdwUUrbI/m/onMsQspcljcJ) of Go's first release in 2009
+- You can play with it right now at the [Go Tip Playground](https://gotipplay.golang.org/)
+- [Go 1.18rc1](https://go.dev/dl/#go1.18rc1) is available today
+- The final release is expected in March, 2022
+
+## A Basic Weather Problem
+
+- Go code that ingests data from a weather station...
+- Different parameters are in different units
+  - Temperature is `float64`
+  - Relative humidity is `uint8`
+
+<img src="https://media.giphy.com/media/3OsDThsTGpnLlBNOSg/giphy.gif" width="450px" />
+
+## A Basic Weather Problem - The Code
+
+.code ../oldCode/temperature.go
+
+## A Basic Weather Problem - The Code (cont)
+
+.code ../oldCode/humidity.go
+
+## Bringing It All Together
+
+.code ../oldCode/main.go
+
+Output:
+
+```bash
+brock97@rock-air oldCode % go run *.go
+max temp: 17.6, min temp -32.0
+max humidity: 52, min humidity 9
+```
+
+## Boy, it would be nice to de-dupe that code....
+
+![halp!](https://media.giphy.com/media/FqAwoNjVneJxK/giphy.gif)
+
+## Generics to the rescue...
+
+Let's Start With a Function
+
+.code ../genericExample/main.go
+
+## Explaining The Generic Function
+
+The function definition:
+
+```go
+func Max[T constraints.Ordered](readings... T) (max T)
+```
+
+The above function's name is succeeded by [T [constraints.Ordered](https://cs.opensource.google/go/x/exp/+/1812c5b4:constraints/constraints.go;l=48)], the basic form of the syntax for expressing generics in Go:
+
+- `[]` brackets are always used to start a generics definition
+- the simplest pattern is `[<id> <constraint>]`:
+  - **`<id>`**: the symbol which represents the generic type
+  - **`<constraint>`**: the constraint that indicates the allowed concrete types
+- Note that the first call, the type was explicit due to the mixed types
+- If the values are the same, Go can infer what the type is
+
+<img src="https://media.giphy.com/media/HLeBURDggmPQc/giphy.gif" width="200px" style="margin-left: 78px;"/>
+
+## About Constraints
+
+There are numerous **`<constraint>`** available. A few are:
+
+- `any`: Allows you to use any type (fun fact, it is [aliased to an empty `interface{}`](https://github.com/golang/go/blob/2580d0e08d5e9f979b943758d3c49877fb2324cb/src/builtin/builtin.go#L95)) but things like comparison operators `==, !=` and order operators `<, <=, >, >=` are not supported
+- `constraints.Ordered`: only those types that support order operators are allowed (currently an [experimental package](https://cs.opensource.google/go/x/exp/+/1812c5b4:constraints/constraints.go;l=48))
+- Or, define your own:
+
+```go
+package main
+
+/* My weather data types */
+type Measurements interface {
+	uint8 | float64
+}
+
+func Max[T Measurements](readings... T) (max T)
+```
+
+## A Generic Struct
+
+.code ../genericStruct/measurements.go
+
+## A Generic Struct Decon-struct-ed 😉
+
+- `type Measurements[T Measurement] struct`<br/>
+  similar to functions where the bracket indicates a Generic struct
+- `func (h *Measurements[T]) AddReadings(reading ...T)`<br/>
+  receiver functions need the constraint symbol, `T`, but not the full constraint
+
+## Putting it to work
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+  var temperature Measurements[float64]
+  var rh Measurements[uint8]
+  temperature.AddReadings(-32.0, 12.5, 17.6, -15.0)
+  rh.AddReadings(9, 52, 45, 12)
+  fmt.Printf("max temp: %.1f, min temp %.1f\n", temp.MaxReading(), temp.MinReading())
+  fmt.Printf("max humidity: %d, min humidity %d\n", rh.MaxReading(), rh.MinReading())
+}
+```
+Looks good:
+```
+brock97@rock-air genericStruct % go run *.go
+max temp: 17.6, min temp -32.0
+max humidity: 52, min humidity 9
+```
+
+## Constraints And Type Definitions
+
+What happens when we create a type definition?
+
+.code ../genericTypeDefinition/temperature.go
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	var temperature Measurements[Temperature]
+	temperature.AddReadings(-32.0, 12.5, 17.6, -15.0)
+	fmt.Printf("max temp: %.1f°C, min temp %.1f°C\n",
+		temperature.MaxReading().Celsius(), temperature.MinReading().Celsius())
+}
+```
+Compile will 💥💥💥 with the error:
+`Temperature does not implement Measurement (possibly missing ~ for float64 in constraint Measurement)`
+
+## Fixing The Constraint
+
+tilde to the rescue!
+
+```go
+type Measurement interface {
+	~uint8 | ~float64
+}
+```
+
+That's the output we're looking for!
+
+```
+brock97@rock-air genericTypeDefinition % go run *.go
+max temp: -8.0°C, min temp -35.6°C
+```
+
+## Some Advanced Observations Not Covered Here
+
+- Generics can take multiple types:<br/>
+  func CoolWeatherFunc[T uint8 | uint16, K float32 | float64](windData T, temperature K) {}
+- Interface constraints can have functions (see [here](https://github.com/akutz/go-generics-the-hard-way/blob/main/04-getting-going/05-interface-constraints.md) for more info...)
+
+## Helpful Links
+- [Tutorial: Getting started with generics](https://go.dev/doc/tutorial/generics)
+- [Go generics the hard way](https://github.com/akutz/go-generics-the-hard-way)
+  - Specifically, [section 5](https://github.com/akutz/go-generics-the-hard-way/tree/main/05-internals) compares .NET and Java to Go
+
+## Questions?
+
+![questions?](https://media.giphy.com/media/xT5LMB2WiOdjpB7K4o/giphy.gif)
